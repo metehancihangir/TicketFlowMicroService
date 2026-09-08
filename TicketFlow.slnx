@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="TicketFlow.AnalyticsService/TicketFlow.AnalyticsService.csproj" />
+  <Project Path="TicketFlow.AuthService/TicketFlow.AuthService.csproj" />
+  <Project Path="TicketFlow.EventService/TicketFlow.EventService.csproj" />
+  <Project Path="TicketFlow.Gateway/TicketFlow.Gateway.csproj" />
+  <Project Path="TicketFlow.ReservationService/TicketFlow.ReservationService.csproj" />
+  <Project Path="TicketFlow.TicketWorker/TicketFlow.TicketWorker.csproj" />
+</Solution>
