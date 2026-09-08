@@ -1,0 +1,153 @@
+﻿version: "3.9"
+
+services:
+  # ---------- Altyapı ----------
+  auth-db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: AuthDb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  event-db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: EventDb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - event-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  reservation-db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ReservationDb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - reservation-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  analytics-db:
+    image: mongo:7
+    volumes:
+      - analytics-db-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "15672:15672"   # Management UI
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ---------- Mikroservisler ----------
+  auth-service:
+    build:
+      context: ./TicketFlow.AuthService
+      dockerfile: Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__AuthDb: "Host=auth-db;Database=AuthDb;Username=postgres;Password=postgres"
+    depends_on:
+      auth-db:
+        condition: service_healthy
+
+  event-service:
+    build:
+      context: ./TicketFlow.EventService
+      dockerfile: Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__EventDb: "Host=event-db;Database=EventDb;Username=postgres;Password=postgres"
+    depends_on:
+      event-db:
+        condition: service_healthy
+
+  reservation-service:
+    build:
+      context: ./TicketFlow.ReservationService
+      dockerfile: Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__ReservationDb: "Host=reservation-db;Database=ReservationDb;Username=postgres;Password=postgres"
+      Services__EventService: "http://event-service:8080"
+      RabbitMq__Host: "rabbitmq"
+    depends_on:
+      reservation-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  ticket-worker:
+    build:
+      context: ./TicketFlow.TicketWorker
+      dockerfile: Dockerfile
+    environment:
+      DOTNET_ENVIRONMENT: Production
+      RabbitMq__Host: "rabbitmq"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  analytics-service:
+    build:
+      context: ./TicketFlow.AnalyticsService
+      dockerfile: Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__AnalyticsDb: "mongodb://analytics-db:27017"
+      RabbitMq__Host: "rabbitmq"
+    depends_on:
+      analytics-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  # ---------- Gateway (dışa açılan tek kapı) ----------
+  gateway:
+    build:
+      context: ./TicketFlow.Gateway
+      dockerfile: Dockerfile
+    ports:
+      - "5000:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ReverseProxy__Clusters__auth-cluster__Destinations__d1__Address: "http://auth-service:8080"
+      ReverseProxy__Clusters__event-cluster__Destinations__d1__Address: "http://event-service:8080"
+      ReverseProxy__Clusters__reservation-cluster__Destinations__d1__Address: "http://reservation-service:8080"
+      ReverseProxy__Clusters__analytics-cluster__Destinations__d1__Address: "http://analytics-service:8080"
+    depends_on:
+      - auth-service
+      - event-service
+      - reservation-service
+      - analytics-service
+
+volumes:
+  auth-db-data:
+  event-db-data:
+  reservation-db-data:
+  analytics-db-data:
