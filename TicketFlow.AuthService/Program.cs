@@ -1,11 +1,15 @@
-using System.Text;
+﻿using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
 using TicketFlow.AuthService.Data;
 using TicketFlow.AuthService.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, loggerConfig) =>
+    loggerConfig.WriteTo.Console().ReadFrom.Configuration(context.Configuration));
 
 // EF Core
 builder.Services.AddDbContext<AuthDbContext>(options =>
@@ -32,9 +36,15 @@ builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 builder.Services.AddScoped<ITokenService, TokenService>();
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 var app = builder.Build();
 
-// Auto-migrate on startup (skip in Testing environment — InMemory is used)
+app.UseSwagger();
+app.UseSwaggerUI();
+
+// Auto-migrate on startup (skip in Testing environment â€” InMemory is used)
 if (!app.Environment.IsEnvironment("Testing"))
 {
     using var scope = app.Services.CreateScope();
@@ -52,3 +62,4 @@ app.Run();
 
 // For integration tests
 public partial class Program { }
+

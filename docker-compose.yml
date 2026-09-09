@@ -1,4 +1,4 @@
-﻿version: "3.9"
+version: "3.9"
 
 services:
   # ---------- Altyapi ----------
@@ -79,6 +79,11 @@ services:
     depends_on:
       auth-db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   event-service:
     build:
@@ -93,6 +98,11 @@ services:
     depends_on:
       event-db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   reservation-service:
     build:
@@ -111,6 +121,11 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   ticket-worker:
     build:
@@ -136,6 +151,11 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   # ---------- Gateway (disariya acilan tek kapi) ----------
   gateway:
@@ -151,10 +171,19 @@ services:
       ReverseProxy__Clusters__reservation-cluster__Destinations__d1__Address: "http://reservation-service:8080"
       ReverseProxy__Clusters__analytics-cluster__Destinations__d1__Address: "http://analytics-service:8080"
     depends_on:
-      - auth-service
-      - event-service
-      - reservation-service
-      - analytics-service
+      auth-service:
+        condition: service_healthy
+      event-service:
+        condition: service_healthy
+      reservation-service:
+        condition: service_healthy
+      analytics-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
 volumes:
   auth-db-data:

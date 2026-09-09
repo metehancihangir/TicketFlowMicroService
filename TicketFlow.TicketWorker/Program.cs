@@ -1,7 +1,11 @@
-﻿using MassTransit;
+using MassTransit;
 using TicketFlow.TicketWorker.Consumers;
+using Serilog;
 
 var builder = Host.CreateApplicationBuilder(args);
+
+builder.Services.AddSerilog((services, loggerConfig) =>
+    loggerConfig.WriteTo.Console().ReadFrom.Configuration(builder.Configuration));
 
 builder.Services.AddMassTransit(x =>
 {

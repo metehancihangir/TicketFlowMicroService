@@ -235,6 +235,6 @@ EventAnalytics (Document)
 
 ## 9. Açık Sorular (Sonraki Görüşmede Netleştirilecek)
 
-- [ ] Rate limiting için kesin sayısal değerler (dakika başına istek limiti) netleştirilecek mi, yoksa varsayılan öneriler mi kullanılacak?
-- [ ] Ödeme simülasyonunda başarısız senaryo (%X ihtimalle `PaymentStatus: Failed`) test amaçlı eklensin mi, yoksa her zaman başarılı mı dönsün?
-- [ ] Docker Compose dosyasında servis health-check'leri (`healthcheck` directive) detaylandırılacak mı?
+- [x] Rate limiting için kesin sayısal değerler (dakika başına istek limiti) netleştirilecek mi, yoksa varsayılan öneriler mi kullanılacak? **Çözüldü: Faz 7'de `/api/reservations` için dakikada 10 istek olarak kurgulandı.**
+- [x] Ödeme simülasyonunda başarısız senaryo (%X ihtimalle `PaymentStatus: Failed`) test amaçlı eklensin mi, yoksa her zaman başarılı mı dönsün? **Çözüldü: Faz 4'te %10 ihtimalle başarısız dönecek şekilde kurgulandı.**
+- [x] Docker Compose dosyasında servis health-check'leri (`healthcheck` directive) detaylandırılacak mı? **Çözüldü: Faz 7'de tüm veritabanları ve RabbitMQ'ya ek olarak .NET servislerine de curl tabanlı healthcheck eklendi.**
