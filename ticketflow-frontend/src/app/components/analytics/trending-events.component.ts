@@ -1,4 +1,4 @@
-﻿import { Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AnalyticsService, TrendingEvent } from '../../services/analytics.service';
 import { EventService } from '../../services/event.service'; // Etkinlik isimlerini çekmek için
@@ -44,7 +44,7 @@ export class TrendingEventsComponent implements OnInit {
         // İsimleri getirebilmek için EventService'den etkinlikleri çekiyoruz
         this.eventService.getEvents().subscribe(events => {
           events.forEach(e => {
-            this.eventNames[e.id] = e.name;
+            this.eventNames[e.id] = e.title;
           });
         });
       },

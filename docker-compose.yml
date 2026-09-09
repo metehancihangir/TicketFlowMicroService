@@ -1,4 +1,4 @@
-version: "3.9"
+﻿version: "3.9"
 
 services:
   # ---------- Altyapi ----------
@@ -67,8 +67,8 @@ services:
   # ---------- Mikroservisler (ic portlar disariya kapali) ----------
   auth-service:
     build:
-      context: ./TicketFlow.AuthService
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: TicketFlow.AuthService/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__AuthDb: "Host=auth-db;Database=AuthDb;Username=postgres;Password=postgres"
@@ -87,8 +87,8 @@ services:
 
   event-service:
     build:
-      context: ./TicketFlow.EventService
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: TicketFlow.EventService/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__EventDb: "Host=event-db;Database=EventDb;Username=postgres;Password=postgres"
@@ -106,8 +106,8 @@ services:
 
   reservation-service:
     build:
-      context: ./TicketFlow.ReservationService
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: TicketFlow.ReservationService/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__ReservationDb: "Host=reservation-db;Database=ReservationDb;Username=postgres;Password=postgres"
@@ -129,8 +129,8 @@ services:
 
   ticket-worker:
     build:
-      context: ./TicketFlow.TicketWorker
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: TicketFlow.TicketWorker/Dockerfile
     environment:
       DOTNET_ENVIRONMENT: Production
       RabbitMq__Host: "rabbitmq"
@@ -140,8 +140,8 @@ services:
 
   analytics-service:
     build:
-      context: ./TicketFlow.AnalyticsService
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: TicketFlow.AnalyticsService/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__AnalyticsDb: "mongodb://analytics-db:27017"
@@ -160,8 +160,8 @@ services:
   # ---------- Gateway (disariya acilan tek kapi) ----------
   gateway:
     build:
-      context: ./TicketFlow.Gateway
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: TicketFlow.Gateway/Dockerfile
     ports:
       - "5000:8080"
     environment:
@@ -185,8 +185,19 @@ services:
       timeout: 5s
       retries: 3
 
+  frontend:
+    build:
+      context: ./ticketflow-frontend
+      dockerfile: Dockerfile
+    ports:
+      - "4200:80"
+    depends_on:
+      gateway:
+        condition: service_healthy
+
 volumes:
   auth-db-data:
   event-db-data:
   reservation-db-data:
   analytics-db-data:
+
