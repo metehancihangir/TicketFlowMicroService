@@ -1,12 +1,16 @@
-using System.Text;
+﻿using System.Text;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using TicketFlow.ReservationService.Data;
 using TicketFlow.ReservationService.Services;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, loggerConfig) =>
+    loggerConfig.WriteTo.Console().ReadFrom.Configuration(context.Configuration));
 
 // EF Core
 builder.Services.AddDbContext<ReservationDbContext>(options =>
@@ -60,7 +64,13 @@ if (!builder.Environment.IsEnvironment("Testing"))
     });
 }
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 var app = builder.Build();
+
+app.UseSwagger();
+app.UseSwaggerUI();
 
 // Auto-migrate on startup (skip in Testing environment)
 if (!app.Environment.IsEnvironment("Testing"))
@@ -80,3 +90,4 @@ app.Run();
 
 // For integration tests
 public partial class Program { }
+

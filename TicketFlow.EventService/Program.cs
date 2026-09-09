@@ -3,8 +3,12 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using TicketFlow.EventService.Data;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, loggerConfig) =>
+    loggerConfig.WriteTo.Console().ReadFrom.Configuration(context.Configuration));
 
 // EF Core
 builder.Services.AddDbContext<EventDbContext>(options =>
@@ -30,7 +34,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 var app = builder.Build();
+
+app.UseSwagger();
+app.UseSwaggerUI();
 
 // Auto-migrate on startup (skip in Testing environment)
 if (!app.Environment.IsEnvironment("Testing"))
@@ -50,3 +60,4 @@ app.Run();
 
 // For integration tests
 public partial class Program { }
+

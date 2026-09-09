@@ -119,6 +119,7 @@ gh pr merge --merge
 **Kurallar:**
 - PR başlığı formatı sabittir: `Phase [FAZ]: [phases.md'deki faz başlığı]` (örn. `Phase 4: Rezervasyon + Simüle Ödeme`).
 - PR açıklamasında mutlaka `docs/tasks-faz[FAZ].md` dosyasına ve `phases.md`'deki ilgili bölüme referans verilir.
+- **Pull request (PR) açma butonuna basıldıktan sonra, sayfa 10 saniye beklenmeli ve yenilenmelidir (F5). Ancak sayfa yenilendikten sonra Merge pull request butonuna basılmalıdır.**
 - Merge stratejisi **merge commit** (`--merge`) olarak sabittir; `--squash` veya `--rebase` kullanılmaz — böylece her fazın commit geçmişi PR üzerinden okunabilir kalır.
 - `gh pr merge` komutu, GitHub CLI'ın kimlik doğrulaması (`gh auth login`) daha önce yapılmış olmasını gerektirir; asistan bunu varsaymadan önce `gh auth status` ile kontrol edebilir.
 
