@@ -1,10 +1,16 @@
 ﻿using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using TicketFlow.EventService.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// JWT Auth (stateless - same signing key as AuthService)
+// EF Core
+builder.Services.AddDbContext<EventDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("EventDb")));
+
+// JWT Auth (stateless, same key as AuthService)
 var jwtKey = builder.Configuration["Jwt:Key"]!;
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -26,6 +32,14 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 
+// Auto-migrate on startup (skip in Testing environment)
+if (!app.Environment.IsEnvironment("Testing"))
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<EventDbContext>();
+    db.Database.Migrate();
+}
+
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -33,3 +47,6 @@ app.MapGet("/health", () => Results.Ok(new { status = "healthy", service = "Even
 app.MapControllers();
 
 app.Run();
+
+// For integration tests
+public partial class Program { }
