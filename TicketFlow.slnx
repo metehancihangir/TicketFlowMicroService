@@ -6,6 +6,7 @@
   <Project Path="TicketFlow.EventService/TicketFlow.EventService.csproj" />
   <Project Path="TicketFlow.Gateway.Tests/TicketFlow.Gateway.Tests.csproj" />
   <Project Path="TicketFlow.Gateway/TicketFlow.Gateway.csproj" />
+  <Project Path="TicketFlow.ReservationService.Tests/TicketFlow.ReservationService.Tests.csproj" />
   <Project Path="TicketFlow.ReservationService/TicketFlow.ReservationService.csproj" />
   <Project Path="TicketFlow.TicketWorker/TicketFlow.TicketWorker.csproj" />
 </Solution>

@@ -1,8 +1,16 @@
-﻿import { Component, OnInit } from "@angular/core";
+import { Component, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from "@angular/forms";
 import { EventService, EventItem } from "../../services/event.service";
 import { AuthService } from "../../services/auth.service";
+import { ReservationService } from "../../services/reservation.service";
+
+type ReserveStatus = "idle" | "loading" | "success" | "error";
+
+interface ReserveState {
+  status: ReserveStatus;
+  message: string;
+}
 
 @Component({
   selector: "app-event-list",
@@ -22,6 +30,7 @@ import { AuthService } from "../../services/auth.service";
             <th>Mekan</th>
             <th>Tarih</th>
             <th>Kalan Koltuk</th>
+            <th>İşlem</th>
           </tr>
         </thead>
         <tbody>
@@ -30,9 +39,22 @@ import { AuthService } from "../../services/auth.service";
             <td>{{ event.venue }}</td>
             <td>{{ event.eventDate | date:'dd/MM/yyyy HH:mm' }}</td>
             <td>{{ event.availableSeats }} / {{ event.totalSeats }}</td>
+            <td>
+              <button
+                [disabled]="reserveStates[event.id]?.status === 'loading' || event.availableSeats === 0"
+                (click)="onReserve(event)">
+                {{ reserveStates[event.id]?.status === 'loading' ? 'İşleniyor...' : 'Rezerve Et' }}
+              </button>
+              <span *ngIf="reserveStates[event.id]?.status === 'success'" style="color: green; margin-left: 8px;">
+                ✓ {{ reserveStates[event.id]?.message }}
+              </span>
+              <span *ngIf="reserveStates[event.id]?.status === 'error'" style="color: red; margin-left: 8px;">
+                ✗ {{ reserveStates[event.id]?.message }}
+              </span>
+            </td>
           </tr>
           <tr *ngIf="events.length === 0">
-            <td colspan="4">Henüz etkinlik yok.</td>
+            <td colspan="5">Henüz etkinlik yok.</td>
           </tr>
         </tbody>
       </table>
@@ -70,10 +92,12 @@ export class EventListComponent implements OnInit {
   error = false;
   createMessage = "";
   createForm: FormGroup;
+  reserveStates: { [eventId: string]: ReserveState } = {};
 
   constructor(
     public authService: AuthService,
     private eventService: EventService,
+    private reservationService: ReservationService,
     private fb: FormBuilder
   ) {
     this.createForm = this.fb.group({
@@ -93,6 +117,25 @@ export class EventListComponent implements OnInit {
       error: () => {
         this.error = true;
         this.loading = false;
+      }
+    });
+  }
+
+  onReserve(event: EventItem): void {
+    this.reserveStates[event.id] = { status: "loading", message: "Ödeme simüle ediliyor..." };
+
+    this.reservationService.createReservation({ eventId: event.id, seatCount: 1 }).subscribe({
+      next: () => {
+        this.reserveStates[event.id] = { status: "success", message: "Rezervasyon başarılı!" };
+        event.availableSeats -= 1;
+      },
+      error: (err) => {
+        const msg = err.status === 409
+          ? "Koltuk kalmadı."
+          : err.status === 422
+          ? "Ödeme başarısız."
+          : "Bir hata oluştu.";
+        this.reserveStates[event.id] = { status: "error", message: msg };
       }
     });
   }
