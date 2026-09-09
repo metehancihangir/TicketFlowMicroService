@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="TicketFlow.AnalyticsService.Tests/TicketFlow.AnalyticsService.Tests.csproj" />
   <Project Path="TicketFlow.AnalyticsService/TicketFlow.AnalyticsService.csproj" />
   <Project Path="TicketFlow.AuthService.Tests/TicketFlow.AuthService.Tests.csproj" />
   <Project Path="TicketFlow.AuthService/TicketFlow.AuthService.csproj" />

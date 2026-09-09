@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from "@angula
 import { EventService, EventItem } from "../../services/event.service";
 import { AuthService } from "../../services/auth.service";
 import { ReservationService } from "../../services/reservation.service";
+import { TrendingEventsComponent } from "../analytics/trending-events.component";
 
 type ReserveStatus = "idle" | "loading" | "success" | "error";
 
@@ -15,9 +16,10 @@ interface ReserveState {
 @Component({
   selector: "app-event-list",
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TrendingEventsComponent],
   template: `
     <div>
+      <app-trending-events></app-trending-events>
       <h2>Etkinlikler</h2>
 
       <p *ngIf="loading">Yükleniyor...</p>
