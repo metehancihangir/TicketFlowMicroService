@@ -1,0 +1,119 @@
+﻿import { Component, OnInit } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from "@angular/forms";
+import { EventService, EventItem } from "../../services/event.service";
+import { AuthService } from "../../services/auth.service";
+
+@Component({
+  selector: "app-event-list",
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule],
+  template: `
+    <div>
+      <h2>Etkinlikler</h2>
+
+      <p *ngIf="loading">Yükleniyor...</p>
+      <p *ngIf="error">Etkinlikler alınamadı.</p>
+
+      <table *ngIf="!loading && !error">
+        <thead>
+          <tr>
+            <th>Başlık</th>
+            <th>Mekan</th>
+            <th>Tarih</th>
+            <th>Kalan Koltuk</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let event of events">
+            <td>{{ event.title }}</td>
+            <td>{{ event.venue }}</td>
+            <td>{{ event.eventDate | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td>{{ event.availableSeats }} / {{ event.totalSeats }}</td>
+          </tr>
+          <tr *ngIf="events.length === 0">
+            <td colspan="4">Henüz etkinlik yok.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Admin: Etkinlik Ekleme Formu -->
+      <div *ngIf="authService.isAdmin()">
+        <h3>Yeni Etkinlik Ekle</h3>
+        <form [formGroup]="createForm" (ngSubmit)="onCreate()">
+          <div>
+            <label>Başlık:</label>
+            <input formControlName="title" type="text" />
+          </div>
+          <div>
+            <label>Mekan:</label>
+            <input formControlName="venue" type="text" />
+          </div>
+          <div>
+            <label>Tarih:</label>
+            <input formControlName="eventDate" type="datetime-local" />
+          </div>
+          <div>
+            <label>Toplam Koltuk:</label>
+            <input formControlName="totalSeats" type="number" />
+          </div>
+          <button type="submit" [disabled]="createForm.invalid">Ekle</button>
+        </form>
+        <p *ngIf="createMessage">{{ createMessage }}</p>
+      </div>
+    </div>
+  `
+})
+export class EventListComponent implements OnInit {
+  events: EventItem[] = [];
+  loading = true;
+  error = false;
+  createMessage = "";
+  createForm: FormGroup;
+
+  constructor(
+    public authService: AuthService,
+    private eventService: EventService,
+    private fb: FormBuilder
+  ) {
+    this.createForm = this.fb.group({
+      title: ["", Validators.required],
+      venue: ["", Validators.required],
+      eventDate: ["", Validators.required],
+      totalSeats: [100, [Validators.required, Validators.min(1)]]
+    });
+  }
+
+  ngOnInit(): void {
+    this.eventService.getEvents().subscribe({
+      next: (data) => {
+        this.events = data;
+        this.loading = false;
+      },
+      error: () => {
+        this.error = true;
+        this.loading = false;
+      }
+    });
+  }
+
+  onCreate(): void {
+    if (this.createForm.invalid) return;
+    const val = this.createForm.value;
+    this.eventService.createEvent({
+      title: val.title,
+      venue: val.venue,
+      eventDate: new Date(val.eventDate).toISOString(),
+      totalSeats: val.totalSeats
+    }).subscribe({
+      next: (ev) => {
+        this.events.push(ev);
+        this.createForm.reset({ totalSeats: 100 });
+        this.createMessage = `"${ev.title}" etkinliği eklendi.`;
+      },
+      error: () => {
+        this.createMessage = "Etkinlik eklenemedi.";
+      }
+    });
+  }
+}
