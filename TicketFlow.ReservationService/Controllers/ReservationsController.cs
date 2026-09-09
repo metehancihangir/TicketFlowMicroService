@@ -1,8 +1,10 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using MassTransit;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using TicketFlow.Contracts;
 using TicketFlow.ReservationService.Data;
 using TicketFlow.ReservationService.DTOs;
 using TicketFlow.ReservationService.Models;
@@ -19,17 +21,20 @@ public class ReservationsController : ControllerBase
     private readonly IPaymentSimulator _payment;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<ReservationsController> _logger;
+    private readonly IPublishEndpoint? _publishEndpoint;
 
     public ReservationsController(
         ReservationDbContext db,
         IPaymentSimulator payment,
         IHttpClientFactory httpClientFactory,
-        ILogger<ReservationsController> logger)
+        ILogger<ReservationsController> logger,
+        IPublishEndpoint? publishEndpoint = null)
     {
         _db = db;
         _payment = payment;
         _httpClientFactory = httpClientFactory;
         _logger = logger;
+        _publishEndpoint = publishEndpoint;
     }
 
     [HttpPost]
@@ -75,7 +80,18 @@ public class ReservationsController : ControllerBase
             _db.Reservations.Add(reservation);
             await _db.SaveChangesAsync();
 
-            // TODO (Faz 5): Publish TicketReservedEvent to RabbitMQ here
+            // Faz 5: Publish TicketReservedEvent to RabbitMQ
+            if (_publishEndpoint is not null)
+            {
+                await _publishEndpoint.Publish(new TicketReservedEvent(
+                    ReservationId: reservation.Id,
+                    UserId: reservation.UserId,
+                    EventId: reservation.EventId,
+                    SeatCount: reservation.SeatCount,
+                    ReservedAt: reservation.CreatedAt
+                ));
+                _logger.LogInformation("TicketReservedEvent published for ReservationId {ReservationId}", reservation.Id);
+            }
 
             return CreatedAtAction(nameof(GetMy), new { },
                 ToResponse(reservation));

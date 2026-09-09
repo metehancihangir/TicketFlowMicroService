@@ -1,4 +1,5 @@
-﻿using System.Text;
+using System.Text;
+using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -40,6 +41,24 @@ builder.Services.AddHttpClient("EventService", client =>
     client.BaseAddress = new Uri(
         builder.Configuration["Services:EventService"] ?? "http://localhost:5002");
 });
+
+// MassTransit + RabbitMQ (only in non-Testing environments)
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    builder.Services.AddMassTransit(x =>
+    {
+        x.UsingRabbitMq((ctx, cfg) =>
+        {
+            var host = builder.Configuration["RabbitMq:Host"] ?? "localhost";
+            cfg.Host(host, "/", h =>
+            {
+                h.Username("guest");
+                h.Password("guest");
+            });
+            cfg.ConfigureEndpoints(ctx);
+        });
+    });
+}
 
 var app = builder.Build();
 
