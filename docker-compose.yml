@@ -1,7 +1,7 @@
 ﻿version: "3.9"
 
 services:
-  # ---------- Altyapı ----------
+  # ---------- Altyapi ----------
   auth-db:
     image: postgres:16
     environment:
@@ -64,7 +64,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # ---------- Mikroservisler ----------
+  # ---------- Mikroservisler (ic portlar disariya kapali) ----------
   auth-service:
     build:
       context: ./TicketFlow.AuthService
@@ -72,6 +72,10 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__AuthDb: "Host=auth-db;Database=AuthDb;Username=postgres;Password=postgres"
+      Jwt__Key: "TicketFlow_SuperSecret_Dev_Key_MinLength32Chars!"
+      Jwt__Issuer: "TicketFlow.AuthService"
+      Jwt__Audience: "TicketFlow"
+      Jwt__ExpiryMinutes: "60"
     depends_on:
       auth-db:
         condition: service_healthy
@@ -83,6 +87,9 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__EventDb: "Host=event-db;Database=EventDb;Username=postgres;Password=postgres"
+      Jwt__Key: "TicketFlow_SuperSecret_Dev_Key_MinLength32Chars!"
+      Jwt__Issuer: "TicketFlow.AuthService"
+      Jwt__Audience: "TicketFlow"
     depends_on:
       event-db:
         condition: service_healthy
@@ -94,6 +101,9 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__ReservationDb: "Host=reservation-db;Database=ReservationDb;Username=postgres;Password=postgres"
+      Jwt__Key: "TicketFlow_SuperSecret_Dev_Key_MinLength32Chars!"
+      Jwt__Issuer: "TicketFlow.AuthService"
+      Jwt__Audience: "TicketFlow"
       Services__EventService: "http://event-service:8080"
       RabbitMq__Host: "rabbitmq"
     depends_on:
@@ -127,7 +137,7 @@ services:
       rabbitmq:
         condition: service_healthy
 
-  # ---------- Gateway (dışa açılan tek kapı) ----------
+  # ---------- Gateway (disariya acilan tek kapi) ----------
   gateway:
     build:
       context: ./TicketFlow.Gateway
